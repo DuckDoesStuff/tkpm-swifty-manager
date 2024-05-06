@@ -19,6 +19,7 @@ export default function FormInput(props: FormInputProps) {
       </label>
       <input
         type={props.type || "text"}
+        min={props.type === "number" ? 0 : undefined}
         required={props.required}
         readOnly={props.readonly}
         disabled={props.disabled}

@@ -2,12 +2,13 @@
 import FileChooser from "@/components/FormElements/FileChooser";
 import FormInput from "@/components/FormElements/FormInput";
 import FormTextArea from "@/components/FormElements/FormTextArea";
-import { FaCheck } from "react-icons/fa";
-import React, { useState } from "react";
-import Loader from "@/components/common/Loader";
-import { message, Result } from "antd";
+import {FaCheck} from "react-icons/fa";
+import React, {useState} from "react";
+import {message, Result} from "antd";
 import * as Yup from "yup";
 import Button from "@/components/UI/Button";
+import {getDownloadURL, getStorage, ref, uploadBytes} from "@firebase/storage";
+import {auth} from "@/js/firebase.config";
 
 const shopFormSchema = Yup.object().shape({
   name: Yup.string().required("Shop name is required").min(4),
@@ -16,6 +17,7 @@ const shopFormSchema = Yup.object().shape({
     .required("Phone number is required")
     .length(10, "Phone number must be 10 digits"),
   description: Yup.string().required("Shop description is required"),
+  logo: Yup.mixed().required("Shop logo is required"),
 });
 
 interface ShopFormProps {
@@ -23,6 +25,7 @@ interface ShopFormProps {
   address: string;
   phone: string;
   description: string;
+  logo: File | null | string;
 }
 
 const SuccessResponse = () => {
@@ -60,8 +63,19 @@ const FailedResponse = ({ setSuccess }: FailedResponseProps) => {
   );
 };
 
-const createShopAPI = (shopForm: ShopFormProps) => {
-  return fetch(process.env.NEXT_PUBLIC_BACKEND_HOST + "/shop", {
+const createShopAPI = async (shopForm: ShopFormProps) => {
+  const userId = auth.currentUser?.uid;
+  if(shopForm.logo == null) throw new Error("Shop logo is required");
+  if(userId == null) throw new Error("User not authenticated");
+
+  try {
+    const result = await uploadCloudStorage(shopForm.logo as File, userId, shopForm.name.toLowerCase().replace(/ /g, "_"));
+    shopForm.logo = result.downloadUrl;
+  } catch (error) {
+    throw new Error("Failed to upload image to cloud storage");
+  }
+
+  const response = await fetch(process.env.NEXT_PUBLIC_BACKEND_HOST + "/shop", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -69,7 +83,30 @@ const createShopAPI = (shopForm: ShopFormProps) => {
     body: JSON.stringify(shopForm),
     credentials: "include",
   });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
 };
+
+const uploadCloudStorage = async (file: File , userId: string | undefined, shopId: string) => {
+  // Rename file before uploading
+  const cloudStorage = getStorage();
+  const storageRef = ref(cloudStorage);
+  const destinationRef =
+  ref(storageRef, `public/${userId}/${shopId}/logo.jpg`);
+
+  // Check if file already exist
+  try {
+    await getDownloadURL(destinationRef);
+    throw new Error("File already exist");
+  } catch (error) {
+    console.log("File does not exist, uploading...");
+  }
+
+  const snapshot = await uploadBytes(destinationRef, file);
+  return {downloadUrl: await getDownloadURL(snapshot.ref), destinationRef};
+}
 
 export default function CreateShopForm() {
   const [success, setSuccess] = useState<boolean | null>(null);
@@ -78,6 +115,7 @@ export default function CreateShopForm() {
     address: "",
     phone: "",
     description: "",
+    logo: null,
   });
 
   const handleCreateShop = () => {
@@ -104,7 +142,7 @@ export default function CreateShopForm() {
           .catch((err) => {
             message.open({
               key,
-              content: err.errors[0],
+              content: err,
               type: "error",
             });
             setSuccess(false);
@@ -113,7 +151,7 @@ export default function CreateShopForm() {
       .catch((err) => {
         message.open({
           key,
-          content: err.errors[0],
+          content: err,
           type: "error",
         });
       });
@@ -159,7 +197,9 @@ export default function CreateShopForm() {
           placeholder={"Description"}
           required
         />
-        <FileChooser label={"Choose a logo for your shop"} multiple />
+        <FileChooser
+          onChange={(e) => setShopForm({ ...shopForm, logo: e.target.files ? e.target.files[0] : null})}
+          label={"Choose a logo for your shop"} required />
 
         <div className={"self-center"}>
           <Button
