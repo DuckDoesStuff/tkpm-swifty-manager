@@ -2,6 +2,8 @@
 import Link from "next/link";
 import {useEffect, useState} from "react";
 import Loader from "@/components/common/Loader";
+import Image from "next/image";
+import {useRouter} from "next/navigation";
 
 const NoShop = () => (
   <h1>
@@ -13,22 +15,42 @@ const NoShop = () => (
 );
 
 interface ShopCardProps {
-  id: string;
-  name: string;
+  nameId: string;
+  displayName: string;
   description: string;
   address: string;
   phone: string;
+  logo: string;
 }
 
-const ShopCard = ({ id, name, description, address, phone } : ShopCardProps) => (
-  <Link href={`${id}`} className="transition-all duration-200 hover:bg-opacity-60 hover:dark:bg-boxdark-2 rounded-md border border-stroke bg-white p-5 drop-shadow-lg dark:border-strokedark dark:bg-boxdark">
-    <h1>Name: {name}</h1>
-    <p>ID: {id}</p>
-    <p>Description: {description}</p>
-    <p>Address: {address}</p>
-    <p>Phone: {phone}</p>
+interface ShopCardProps {
+  handleOnClick?: void
+}
+
+const ShopCard = ({
+                    displayName,
+                    nameId,
+                    description,
+                    address,
+                    phone,
+                    logo,
+                  }: ShopCardProps) => {
+  const router = useRouter();
+  return (
+
+    <Link href={`/shop/${nameId}`}
+          className="flex justify-between transition-all duration-200 hover:bg-opacity-60 hover:dark:bg-boxdark-2 rounded-md border border-stroke bg-white p-5 drop-shadow-lg dark:border-strokedark dark:bg-boxdark">
+      <div>
+        <h1>Name: {displayName}</h1>
+        <p>ID: {nameId}</p>
+        <p>Description: {description}</p>
+        <p>Address: {address}</p>
+        <p>Phone: {phone}</p>
+      </div>
+      <Image className={"rounded-3xl"} width={120} height={120} priority src={logo} alt={`${nameId}-shop-logo`}/>
   </Link>
-);
+  )
+}
 
 export default function Shop() {
   const [loading, setLoading] = useState(true);
@@ -61,16 +83,16 @@ export default function Shop() {
 
   }, []);
 
-  if(loading) {
+  if (loading) {
     return (
-      <Loader />
+      <Loader/>
     );
   }
 
-  if(shops.length <= 0) {
+  if (shops.length <= 0) {
     return (
       <div>
-        <NoShop />
+        <NoShop/>
       </div>
     );
   }
@@ -78,7 +100,7 @@ export default function Shop() {
   return (
     <div className={"flex flex-col gap-6"}>
       {shops.map((shop) => (
-        <ShopCard key={shop.name} {...shop} />
+        <ShopCard key={shop.nameId} {...shop} />
       ))}
     </div>
   );

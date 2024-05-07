@@ -1,14 +1,15 @@
-import { useEffect, useRef, useState } from "react";
+import {useEffect, useRef, useState} from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { SlArrowDown } from "react-icons/sl";
-import { auth } from "@/js/firebase.config";
-import { UserInfo } from "@firebase/auth";
-import { useAuthContext } from "@/contexts/AuthContext";
+import {SlArrowDown} from "react-icons/sl";
+import {useAuthContext} from "@/contexts/AuthContext";
+import {auth} from "@/js/firebase.config";
+import {useRouter} from "next/navigation";
 
 const DropdownUser = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const user = useAuthContext();
+  const router = useRouter();
 
   const trigger = useRef<any>(null);
   const dropdown = useRef<any>(null);
@@ -38,6 +39,17 @@ const DropdownUser = () => {
     document.addEventListener("keydown", keyHandler);
     return () => document.removeEventListener("keydown", keyHandler);
   });
+
+  const handleLogout = async () => {
+    console.log("Logout");
+    await auth.signOut();
+    await fetch(process.env.NEXT_PUBLIC_BACKEND_HOST + "/session/merchant", {
+      method: "DELETE",
+      credentials: "include",
+    });
+
+    router.push("/auth/signin");
+  }
 
   return (
     <div className="relative">
@@ -151,7 +163,10 @@ const DropdownUser = () => {
             </Link>
           </li>
         </ul>
-        <button className="flex items-center gap-3.5 px-6 py-4 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base">
+        <button
+          className="flex items-center gap-3.5 px-6 py-4 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
+          onClick={handleLogout}
+        >
           <svg
             className="fill-current"
             width="22"

@@ -1,9 +1,9 @@
 "use client";
 import Link from "next/link";
-import React, { useState } from "react";
-import { auth } from "@/js/firebase.config";
-import { useRouter } from "next/navigation";
-import { signInWithEmailAndPassword } from "@firebase/auth";
+import React, {useState} from "react";
+import {auth} from "@/js/firebase.config";
+import {useRouter} from "next/navigation";
+import {signInWithEmailAndPassword} from "@firebase/auth";
 
 interface Credential {
   email: string;
@@ -56,22 +56,7 @@ export default function SignInForm() {
     }
 
     try {
-      // First we call firebase to signin
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        credential.email,
-        credential.password,
-      );
-
-      if (userCredential.user == null) {
-        // setAlertMessage("An error occurred. Please try again.");
-        return;
-      }
-
-      // Get the idToken
-      const idToken = await userCredential.user.getIdToken();
-
-      // Then api to check for merchant credentials in the database
+      // Call api to check for merchant credentials in the database
       const response = await fetch(
         process.env.NEXT_PUBLIC_BACKEND_HOST + "/merchant/signin",
         {
@@ -90,6 +75,20 @@ export default function SignInForm() {
         return;
       }
 
+      // Ưe call firebase to signin
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        credential.email,
+        credential.password,
+      );
+
+      if (userCredential.user == null) {
+        // setAlertMessage("An error occurred. Please try again.");
+        return;
+      }
+
+      // Get the idToken
+      const idToken = await userCredential.user.getIdToken();
       // Create a session
       const sessionResponse = await fetch(
         process.env.NEXT_PUBLIC_BACKEND_HOST + "/session/merchant",
@@ -197,10 +196,13 @@ export default function SignInForm() {
         </div>
       </div>
 
+      {/*Sign in Button*/}
       <button className="mb-5 w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 text-white transition hover:bg-opacity-90">
         Sign in
       </button>
 
+      {/*Sign in with google Button*/}
+      {/*
       <button className="flex w-full items-center justify-center gap-3.5 rounded-lg border border-stroke bg-gray p-4 hover:bg-opacity-50 dark:border-strokedark dark:bg-meta-4 dark:hover:bg-opacity-50">
         <span>
           <svg
@@ -237,7 +239,7 @@ export default function SignInForm() {
         </span>
         Sign in with Google
       </button>
-
+       */}
       <div className="mt-6 text-center">
         <p>
           Don’t have any account?{" "}

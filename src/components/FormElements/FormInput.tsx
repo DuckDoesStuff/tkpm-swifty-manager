@@ -13,7 +13,7 @@ interface FormInputProps {
 export default function FormInput(props: FormInputProps) {
   return (
     <div>
-      <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+      <label className="mb-3 block text-md font-medium text-black dark:text-white">
         {props.label || "Default Input"}
         {props.required && <span className="ml-2 text-primary">*</span>}
       </label>

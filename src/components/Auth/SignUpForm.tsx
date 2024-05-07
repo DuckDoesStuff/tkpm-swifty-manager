@@ -1,15 +1,13 @@
 "use client";
 import Link from "next/link";
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-} from "@firebase/auth";
-import { auth } from "@/js/firebase.config";
+import React, {useState} from "react";
+import {useRouter} from "next/navigation";
+import {createUserWithEmailAndPassword, signInWithEmailAndPassword,} from "@firebase/auth";
+import {auth} from "@/js/firebase.config";
 
 interface Credential {
   email: string;
+  nameId: string;
   password: string;
   confirmPassword: string;
 }
@@ -17,6 +15,7 @@ interface Credential {
 export default function SignUpForm() {
   const [credential, setCredential] = useState<Credential>({
     email: "",
+    nameId: "",
     password: "",
     confirmPassword: "",
   });
@@ -27,13 +26,15 @@ export default function SignUpForm() {
     setCredential({ ...credential, email: e.target.value });
   };
 
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCredential({...credential, nameId: e.target.value});
+  }
+
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCredential({ ...credential, password: e.target.value });
   };
 
-  const handleConfirmPasswordChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCredential({ ...credential, confirmPassword: e.target.value });
   };
 
@@ -72,19 +73,6 @@ export default function SignUpForm() {
     }
 
     try {
-      // First we call firebase to signup
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        credential.email,
-        credential.password,
-      );
-
-      const user = userCredential.user;
-      if (!user) {
-        console.log("Failed to sign up");
-        return;
-      }
-
       // Call API create merchant in the database
       const response = await fetch(
         process.env.NEXT_PUBLIC_BACKEND_HOST + "/merchant/signup",
@@ -95,20 +83,27 @@ export default function SignUpForm() {
           },
           body: JSON.stringify({
             email: credential.email,
+            nameId: credential.nameId,
           }),
         },
       );
 
-      // Send a request to firebase to delete the user if it was created
       if (!response.ok) {
-        user
-          .delete()
-          .then(() => {
-            console.log("User deleted");
-          })
-          .catch((error) => {
-            console.log(error);
-          });
+        console.log("Failed to create merchant");
+        return;
+      }
+
+      // Call firebase to signup
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        credential.email,
+        credential.password,
+      );
+
+      const user = userCredential.user;
+      if (!user) {
+        console.log("Failed to sign up");
+        return;
       }
 
       // Request firebase to sign in the user
@@ -134,6 +129,7 @@ export default function SignUpForm() {
           body: JSON.stringify({
             idToken: idToken,
             email: credential.email,
+            nameId: credential.nameId,
           }),
         },
       );
@@ -189,6 +185,20 @@ export default function SignUpForm() {
               </g>
             </svg>
           </span>
+        </div>
+      </div>
+
+      <div className="mb-4">
+        <label className="mb-2.5 block font-medium text-black dark:text-white">
+          Username
+        </label>
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Enter your username"
+            onChange={handleUsernameChange}
+            className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+          />
         </div>
       </div>
 
@@ -264,6 +274,7 @@ export default function SignUpForm() {
         </div>
       </div>
 
+      {/*Sign up button*/}
       <div className="mb-5">
         <input
           type="submit"
@@ -272,7 +283,9 @@ export default function SignUpForm() {
         />
       </div>
 
-      <button className="flex w-full items-center justify-center gap-3.5 rounded-lg border border-stroke bg-gray p-4 hover:bg-opacity-50 dark:border-strokedark dark:bg-meta-4 dark:hover:bg-opacity-50">
+      {/*Sign up with google button*/}
+      {/*<button
+        className="flex w-full items-center justify-center gap-3.5 rounded-lg border border-stroke bg-gray p-4 hover:bg-opacity-50 dark:border-strokedark dark:bg-meta-4 dark:hover:bg-opacity-50">
         <span>
           <svg
             width="20"
@@ -301,14 +314,14 @@ export default function SignUpForm() {
             </g>
             <defs>
               <clipPath id="clip0_191_13499">
-                <rect width="20" height="20" fill="white" />
+                <rect width="20" height="20" fill="white"/>
               </clipPath>
             </defs>
           </svg>
         </span>
         Sign up with Google
       </button>
-
+      */}
       <div className="mt-6 text-center">
         <p>
           Already have an account?{" "}

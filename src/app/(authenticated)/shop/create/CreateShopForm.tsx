@@ -12,6 +12,7 @@ import {auth} from "@/js/firebase.config";
 
 const shopFormSchema = Yup.object().shape({
   name: Yup.string().required("Shop name is required").min(4),
+  displayName: Yup.string().required("Display name is required").min(4),
   address: Yup.string().required("Shop address is required"),
   phone: Yup.string()
     .required("Phone number is required")
@@ -22,6 +23,7 @@ const shopFormSchema = Yup.object().shape({
 
 interface ShopFormProps {
   name: string;
+  displayName: string;
   address: string;
   phone: string;
   description: string;
@@ -65,28 +67,35 @@ const FailedResponse = ({ setSuccess }: FailedResponseProps) => {
 
 const createShopAPI = async (shopForm: ShopFormProps) => {
   const userId = auth.currentUser?.uid;
-  if(shopForm.logo == null) throw new Error("Shop logo is required");
   if(userId == null) throw new Error("User not authenticated");
-
-  try {
-    const result = await uploadCloudStorage(shopForm.logo as File, userId, shopForm.name.toLowerCase().replace(/ /g, "_"));
-    shopForm.logo = result.downloadUrl;
-  } catch (error) {
-    throw new Error("Failed to upload image to cloud storage");
-  }
 
   const response = await fetch(process.env.NEXT_PUBLIC_BACKEND_HOST + "/shop", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(shopForm),
+    body: JSON.stringify({
+      nameId: shopForm.name,
+      displayName: shopForm.displayName,
+      address: shopForm.address,
+      phone: shopForm.phone,
+      description: shopForm.description,
+    }),
     credentials: "include",
   });
 
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
+
+  console.log("Shop created uploading file")
+
+  shopForm.logo = await uploadCloudStorage(shopForm.logo as File, userId, shopForm.name);
+
+  console.log("File uploaded updating shop")
+  await updateShopAPI(shopForm.name, shopForm.logo as string);
+  console.log("Shop updated")
+
 };
 
 const uploadCloudStorage = async (file: File , userId: string | undefined, shopId: string) => {
@@ -96,22 +105,35 @@ const uploadCloudStorage = async (file: File , userId: string | undefined, shopI
   const destinationRef =
   ref(storageRef, `public/${userId}/${shopId}/logo.jpg`);
 
-  // Check if file already exist
-  try {
-    await getDownloadURL(destinationRef);
-    throw new Error("File already exist");
-  } catch (error) {
-    console.log("File does not exist, uploading...");
-  }
 
   const snapshot = await uploadBytes(destinationRef, file);
-  return {downloadUrl: await getDownloadURL(snapshot.ref), destinationRef};
+  if (!snapshot) {
+    throw new Error("Failed to upload file");
+  }
+  return await getDownloadURL(snapshot.ref);
+}
+
+const updateShopAPI = async (shopId: string, logo: string) => {
+  const response = await fetch(process.env.NEXT_PUBLIC_BACKEND_HOST + `/shop/${shopId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({logo}),
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
 }
 
 export default function CreateShopForm() {
   const [success, setSuccess] = useState<boolean | null>(null);
   const [shopForm, setShopForm] = useState<ShopFormProps>({
     name: "",
+    displayName: "",
     address: "",
     phone: "",
     description: "",
@@ -166,11 +188,12 @@ export default function CreateShopForm() {
       <form className={"flex flex-col gap-9"}>
         <div className={"grid grid-cols-3 gap-9"}>
           <FormInput
-            onChange={(e) => setShopForm({ ...shopForm, name: e.target.value })}
-            label={"Shop name"}
-            placeholder={"Name"}
-            required
-          />
+            label={"Display name"}
+            placeholder={"Display name for your shop"}
+            onChange={(e) =>
+              setShopForm({...shopForm, displayName: e.target.value})
+            }
+            required/>
           <FormInput
             onChange={(e) =>
               setShopForm({ ...shopForm, address: e.target.value })
@@ -189,6 +212,12 @@ export default function CreateShopForm() {
             required
           />
         </div>
+        <FormInput
+          onChange={(e) => setShopForm({...shopForm, name: e.target.value})}
+          label={"Shop name"}
+          placeholder={"Should be unique, can't be changed, no spaces or special characters"}
+          required
+        />
         <FormTextArea
           onChange={(e) =>
             setShopForm({ ...shopForm, description: e.target.value })

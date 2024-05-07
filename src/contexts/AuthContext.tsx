@@ -1,7 +1,7 @@
 "use client";
-import { usePathname, useRouter } from "next/navigation";
-import React, { createContext, useState, useEffect, useContext } from "react";
-import { UserInfo } from "@firebase/auth";
+import {usePathname, useRouter} from "next/navigation";
+import React, {createContext, useContext, useEffect, useState} from "react";
+import {UserInfo} from "@firebase/auth";
 
 export const AuthContext = createContext<UserInfo | null>(null);
 
@@ -19,7 +19,7 @@ export function AuthContextProvider({
       headers: {
         "Content-Type": "application/json",
       },
-      credentials: "include",
+      credentials: "include", // Send cookies
     })
       .then(async (response) => {
         const result = await response.json();
@@ -33,6 +33,8 @@ export function AuthContextProvider({
       })
       .catch((error) => {
         console.log(error);
+        if (pathname !== "/auth/signup" && pathname !== "/auth/signin")
+          router.push("/auth/signin");
       });
   }, []);
 
