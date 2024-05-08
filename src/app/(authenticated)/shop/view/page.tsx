@@ -38,7 +38,7 @@ const ShopCard = ({
   const router = useRouter();
   return (
 
-    <Link href={`/shop/${nameId}`}
+    <Link href={`/dashboard/${nameId}`}
           className="flex justify-between transition-all duration-200 hover:bg-opacity-60 hover:dark:bg-boxdark-2 rounded-md border border-stroke bg-white p-5 drop-shadow-lg dark:border-strokedark dark:bg-boxdark">
       <div>
         <h1>Name: {displayName}</h1>

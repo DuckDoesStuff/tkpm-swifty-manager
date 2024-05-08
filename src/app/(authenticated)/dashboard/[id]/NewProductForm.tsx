@@ -61,15 +61,13 @@ const uploadCloudStorage = async (files: FileList, userId: string, shopNameId: s
   const storage = getStorage();
   const storageRef = ref(storage, `public/${userId}/${shopNameId}/products/${productId}`);
 
-  const thumbnailUrl = [];
-  for (let i = 0; i < files.length; i++) {
+  const uploadPromises = Array.from(files).map(async (file, i) => {
     const thumbnailRef = ref(storageRef, `thumbnail_${i + 1}.jpg`);
-    await uploadBytes(thumbnailRef, files[i]);
-    const url = await getDownloadURL(thumbnailRef);
-    thumbnailUrl.push(url);
-  }
+    await uploadBytes(thumbnailRef, file);
+    return await getDownloadURL(thumbnailRef);
+  });
 
-  return thumbnailUrl;
+  return await Promise.all(uploadPromises);
 }
 
 const createProductImageAPI = async (productId: string, thumbnail: string[]) => {
@@ -140,8 +138,8 @@ export default function NewProductForm() {
 
 
   return (
-    <div>
-      <h1 className={"text-3xl font-bold text-black-2"}>Sell a new product</h1>
+    <div className={"rounded-md border border-stroke bg-white p-5 drop-shadow-lg dark:border-strokedark dark:bg-boxdark"}>
+      <h1 className={"text-3xl font-bold text-black-2 dark:text-white"}>Sell a new product</h1>
       <form className={"flex flex-col mt-5 gap-5"}>
         <FormInput onChange={(e) => setProduct({...product, name: e.target.value})} label="Name" type="text"
                    placeholder="Product Name" required/>

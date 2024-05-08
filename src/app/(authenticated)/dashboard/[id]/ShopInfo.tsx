@@ -21,26 +21,27 @@ export default function ShopInfo() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(process.env.NEXT_PUBLIC_BACKEND_HOST + "/shop/" + params.id, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
+    if(loading) {
+      fetch(process.env.NEXT_PUBLIC_BACKEND_HOST + "/shop/" + params.id, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
       })
-      .then((data) => {
-        setShopInfo(data);
-        setLoading(false);
-        console.log(data)
-      })
-      .catch((error) => {
-        console.error(error);
-      });
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then((data) => {
+          setShopInfo(data);
+          setLoading(false);
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    }
   }, []);
 
   if (loading) return <Loader/>
@@ -48,7 +49,7 @@ export default function ShopInfo() {
   if (!shopInfo) return <p>Shop not found</p>
 
   return (
-    <div className={"flex justify-between"}>
+    <div className={"flex justify-between rounded-md border border-stroke bg-white p-5 drop-shadow-lg dark:border-strokedark dark:bg-boxdark"}>
       <div>
         <p>Shop Info</p>
         <p>Name: {shopInfo.displayName}</p>

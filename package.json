@@ -10,10 +10,12 @@
   },
   "dependencies": {
     "@mui/icons-material": "^5.15.15",
-    "antd": "^5.16.5",
+    "@mui/joy": "^5.0.0-beta.36",
+    "antd": "^5.17.0",
     "apexcharts": "^3.45.2",
     "firebase": "^10.11.1",
     "flatpickr": "^4.6.13",
+    "flowbite": "^2.3.0",
     "jsvectormap": "^1.5.3",
     "next": "^14.2.3",
     "react": "^18",
