@@ -6,6 +6,8 @@ interface FormInputProps {
   disabled?: boolean;
   required?: boolean;
   readonly?: boolean;
+  default?: any;
+  value?: any;
   type?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
@@ -20,6 +22,8 @@ export default function FormInput(props: FormInputProps) {
       <input
         type={props.type || "text"}
         min={props.type === "number" ? 0 : undefined}
+        value={props.value}
+        defaultValue={props.default}
         required={props.required}
         readOnly={props.readonly}
         disabled={props.disabled}

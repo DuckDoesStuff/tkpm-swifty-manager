@@ -6,6 +6,8 @@ interface FormTextAreaProps {
   disabled?: boolean;
   required?: boolean;
   readonly?: boolean;
+  default?: string;
+  value?: string;
   onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
 }
 
@@ -31,6 +33,8 @@ export default function FormTextArea(props: FormTextAreaProps) {
         required={props.required}
         readOnly={props.readonly}
         disabled={props.disabled}
+        defaultValue={props.default}
+        value={props.value}
         maxLength={1000}
         onChange={handleOnChange}
         placeholder={props.placeholder || "Default textarea"}

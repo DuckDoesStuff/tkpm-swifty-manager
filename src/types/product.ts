@@ -1,8 +1,12 @@
+import ProductImage from "@/types/ProductImage";
+
 export type Product = {
-  image: string;
-  name: string;
-  category: string;
-  price: number;
+  id: number;
+  displayName: string;
+  stock: number;
   sold: number;
-  profit: number;
+  description: string;
+  price: number;
+  productImages: ProductImage[];
+  createdAt: string;
 };

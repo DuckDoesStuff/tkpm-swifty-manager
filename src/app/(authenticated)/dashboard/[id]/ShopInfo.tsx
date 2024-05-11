@@ -1,8 +1,9 @@
 "use client"
-import {useParams} from "next/navigation";
+import {useParams, useRouter} from "next/navigation";
 import {useEffect, useState} from "react";
 import Loader from "@/components/common/Loader";
 import Image from "next/image";
+import Link from "next/link";
 
 
 interface ShopInfoProps {
@@ -17,6 +18,7 @@ interface ShopInfoProps {
 
 export default function ShopInfo() {
   const params = useParams<{ tag: string; id: string }>();
+  const router = useRouter();
   const [shopInfo, setShopInfo] = useState<ShopInfoProps | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -49,9 +51,10 @@ export default function ShopInfo() {
   if (!shopInfo) return <p>Shop not found</p>
 
   return (
+    <>
+      <Link href="#" className={"text-primary font-bold underline"} onClick={() => router.back()}>Go back</Link>
     <div className={"flex justify-between rounded-md border border-stroke bg-white p-5 drop-shadow-lg dark:border-strokedark dark:bg-boxdark"}>
-      <div>
-        <p>Shop Info</p>
+      <div className={"flex flex-col justify-between text-black text-md font-medium dark:text-white"}>
         <p>Name: {shopInfo.displayName}</p>
         <p>Description: {shopInfo.description}</p>
         <p>Address: {shopInfo.address}</p>
@@ -60,6 +63,7 @@ export default function ShopInfo() {
       <Image className={"rounded-3xl"} width={120} height={120} priority src={shopInfo.logo}
              alt={`${shopInfo.nameId}-shop-logo`}/>
     </div>
+    </>
   )
 }
 

@@ -7,6 +7,7 @@ import {Modal} from "antd";
 import {deleteObject, getStorage, listAll, ref} from "@firebase/storage";
 import {auth} from "@/js/firebase.config";
 import {IoRefreshOutline} from "react-icons/io5";
+import Link from "next/link";
 
 interface Product {
   id: number;
@@ -81,10 +82,12 @@ function ProductRow({id, displayName, stock, price, createdAt, shopNameId} : Pro
       <td className={"whitespace-nowrap font-medium px-4 py-2 text-black dark:text-white"}>{stock}</td>
       <td className={"whitespace-nowrap font-medium px-4 py-2 text-black dark:text-white"}>{price}</td>
       <td className={"whitespace-nowrap font-medium pl-4 py-2 text-black dark:text-white"}>{formattedDate}</td>
-      <td
+      <Link href={`./product/${id}`}>
+        <td
         className={"whitespace-nowrap font-medium px-1 py-2 text-black hover:text-meta-6 dark:text-white dark:hover:text-meta-6 cursor-pointer"}>
         Detail
-      </td>
+        </td>
+      </Link>
       <td
         className={"whitespace-nowrap font-medium px-1 py-2 text-black hover:text-primary dark:text-white dark:hover:text-primary cursor-pointer"}>
         Edit
@@ -105,8 +108,8 @@ interface ProductTableProps {
 
 function ProductTable({products, shopNameId}: ProductTableProps) {
   return (
-    <div className={"border border-strokedark rounded-lg dark:border-gray-3"}>
-      <table className={"w-full divide-y divide-strokedark dark:divide-gray-3 rounded-lg"}>
+    <div className={"border border-strokedark rounded-md dark:border-gray-3"}>
+      <table className={"w-full divide-y divide-strokedark dark:divide-gray-3 rounded-md"}>
         <thead className={"text-primary dark:text-meta-3 font-extrabold text-lg"}>
         <tr className={"text-left"}>
           <th className={"px-4 py-2"}>Product Name</th>
