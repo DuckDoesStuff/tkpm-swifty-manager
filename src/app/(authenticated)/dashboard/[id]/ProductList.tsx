@@ -82,15 +82,17 @@ function ProductRow({id, displayName, stock, price, createdAt, shopNameId} : Pro
       <td className={"whitespace-nowrap font-medium px-4 py-2 text-black dark:text-white"}>{stock}</td>
       <td className={"whitespace-nowrap font-medium px-4 py-2 text-black dark:text-white"}>{price}</td>
       <td className={"whitespace-nowrap font-medium pl-4 py-2 text-black dark:text-white"}>{formattedDate}</td>
-      <Link href={`./product/${id}`}>
         <td
         className={"whitespace-nowrap font-medium px-1 py-2 text-black hover:text-meta-6 dark:text-white dark:hover:text-meta-6 cursor-pointer"}>
-        Detail
+          <Link href={`./product/${id}`}>
+            Detail
+          </Link>
         </td>
-      </Link>
       <td
         className={"whitespace-nowrap font-medium px-1 py-2 text-black hover:text-primary dark:text-white dark:hover:text-primary cursor-pointer"}>
-        Edit
+        <Link href={`./product/${id}?edit=true`}>
+          Edit
+        </Link>
       </td>
       <td onClick={() => setRemove(true)}
           className={"whitespace-nowrap font-medium px-1 py-2 text-black hover:text-danger dark:text-white dark:hover:text-danger cursor-pointer"}>

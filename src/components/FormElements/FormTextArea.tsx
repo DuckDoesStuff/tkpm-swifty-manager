@@ -12,7 +12,7 @@ interface FormTextAreaProps {
 }
 
 export default function FormTextArea(props: FormTextAreaProps) {
-  const [count, setCount] = React.useState(0);
+  const [count, setCount] = React.useState(props.value?.length || props.default?.length || 0);
   const handleOnChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setCount(e.target.value.length);
     if (props.onChange) {

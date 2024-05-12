@@ -1,5 +1,5 @@
 "use client"
-import {useParams, useRouter} from "next/navigation";
+import {useParams, useRouter, useSearchParams} from "next/navigation";
 import {useEffect, useState} from "react";
 import {Product} from "@/types/product";
 import Loader from "@/components/common/Loader";
@@ -17,6 +17,7 @@ export default function ProductInfo() {
   const router = useRouter();
   const [edit, setEdit] = useState(false);
   const params = useParams<{ tag: string; id: string }>();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     fetch(process.env.NEXT_PUBLIC_BACKEND_HOST + `/product/${params.id}`, {
@@ -31,6 +32,7 @@ export default function ProductInfo() {
       .then((data) => {
         setProduct(data);
         setLoading(false);
+        setEdit(searchParams.get("edit") === "true");
       })
       .catch((error) => {
         console.error('Error:', error);
