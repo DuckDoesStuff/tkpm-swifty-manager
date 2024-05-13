@@ -1,7 +1,7 @@
 "use client"
 import {useParams, useRouter, useSearchParams} from "next/navigation";
 import {useEffect, useState} from "react";
-import {Product} from "@/types/product";
+import {ProductInfo} from "@/types/productInfo";
 import Loader from "@/components/common/Loader";
 import FormInput from "@/components/FormElements/FormInput";
 import FormTextArea from "@/components/FormElements/FormTextArea";
@@ -12,7 +12,7 @@ import Carousel from "react-multi-carousel";
 import 'react-multi-carousel/lib/styles.css';
 
 export default function ProductInfo() {
-  const [product, setProduct] = useState<Product | null>(null);
+  const [product, setProduct] = useState<ProductInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const [edit, setEdit] = useState(false);

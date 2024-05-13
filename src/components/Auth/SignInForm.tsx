@@ -75,7 +75,7 @@ export default function SignInForm() {
         return;
       }
 
-      // Ưe call firebase to signin
+      // we call firebase to signin
       const userCredential = await signInWithEmailAndPassword(
         auth,
         credential.email,
