@@ -1,30 +1,15 @@
 "use client"
 
 import {useParams} from "next/navigation";
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import {Modal} from "antd";
 import {IoRefreshOutline} from "react-icons/io5";
 import Link from "next/link";
+import Loader from "@/components/common/Loader";
+import OrderInfo from "@/types/OrderInfo";
 
-interface Product {
-  id: number;
-  displayName: string;
-  stock: number;
-  price: number;
-  createdAt: string;
-}
 
-interface Order {
-  id: number;
-  product: Product;
-  quantity: number;
-  total: number;
-  status: string;
-  createdAt: string;
-  customer: string;
-}
-
-interface OrderRowProps extends Order {
+interface OrderRowProps extends OrderInfo {
   shopNameId: string;
 }
 
@@ -32,39 +17,6 @@ function OrdersRow({id, quantity, total, status, product, createdAt, customer}: 
   const [remove, setRemove] = useState(false);
   const date = new Date(createdAt);
   const formattedDate = date.toLocaleString();
-
-//   const handleRemove = () => {
-//     fetch(process.env.NEXT_PUBLIC_BACKEND_HOST + `/product/${id}`, {
-//       method: 'DELETE',
-//       headers: {'Content-Type': 'application/json'},
-//       credentials: 'include'
-//     })
-//       .then((response) => {
-//         if (!response.ok) {
-//           throw new Error("Failed to delete product");
-//         }
-//         const storage = getStorage();
-//         const userId = auth.currentUser?.uid;
-//         const productRef = ref(storage, `/public/${userId}/${shopNameId}/products/${id}`);
-//         listAll(productRef)
-//           .then((res) => {
-//             res.items.forEach((itemRef) => {
-//               deleteObject(itemRef).then(() => {
-//                 console.log("Deleted successfully");
-//               }).catch((error) => {
-//                 console.error("Error deleting", error);
-//               });
-//             });
-//             setRemove(false);
-//           })
-//           .catch((error) => {
-//             console.error("Error listing", error);
-//           });
-//       })
-//       .catch((error) => {
-//         console.error('Error:', error);
-//       });
-//   }
 
   const ModalFooter = () => {
     return (
@@ -77,6 +29,34 @@ function OrdersRow({id, quantity, total, status, product, createdAt, customer}: 
     )
   }
 
+
+  const ActionButton = () => {
+    switch (status) {
+      case "ordered":
+        return <td
+          className={"whitespace-nowrap font-medium px-1 py-2 text-black hover:text-danger dark:text-white dark:hover:text-danger cursor-pointer"}>
+          Take order
+        </td>
+      case "incart":
+        return <td
+          className={"whitespace-nowrap font-medium px-1 py-2 text-neutral-400 dark:text-neutral-500"}>
+          No action
+        </td>
+      case "shipping":
+        return <td
+          className={"whitespace-nowrap font-medium px-1 py-2 text-neutral-400 dark:text-neutral-500"}>
+          No action
+        </td>
+      case "completed":
+        return null;
+      default:
+        return <td
+          className={"whitespace-nowrap font-medium px-1 py-2 text-black hover:text-danger dark:text-white dark:hover:text-danger cursor-pointer"}>
+          Take order
+        </td>
+    }
+  }
+
   return (
     <tr>
       <Modal footer={<ModalFooter/>} title={<h1 className={"text-danger font-bold text-2xl"}>Remove product</h1>}
@@ -87,26 +67,25 @@ function OrdersRow({id, quantity, total, status, product, createdAt, customer}: 
         <p className={"text-black-2 text-lg"}>Are you sure you want to remove this orders?</p>
         <p className={"text-black-2 text-lg"}>This action can't be undo</p>
       </Modal>
-      <td className={"whitespace-nowrap font-medium px-4 py-2 text-black dark:text-white"}>{id}</td>
+      <td className={"whitespace-nowrap font-medium px-4 py-2 text-black dark:text-white"}>
+        <div title={id} className={"truncate w-30"}>
+          {id}
+        </div>
+      </td>
       <td className={"whitespace-nowrap font-medium px-4 py-2 text-black dark:text-white"}>{product.displayName}</td>
       <td className={"whitespace-nowrap font-medium px-4 py-2 text-black dark:text-white"}>{quantity}</td>
       <td className={"whitespace-nowrap font-medium px-4 py-2 text-black dark:text-white"}>{total}</td>
       <td className={"whitespace-nowrap font-medium pl-4 py-2 text-black dark:text-white"}>{status}</td>
-      <td className={"whitespace-nowrap font-medium pl-4 py-2 text-black dark:text-white"}>{createdAt}</td>
-      <td className={"whitespace-nowrap font-medium pl-4 py-2 text-black dark:text-white"}>{customer}</td>
+      <td className={"whitespace-nowrap font-medium pl-4 py-2 text-black dark:text-white"}>{formattedDate}</td>
+      <td className={"whitespace-nowrap font-medium pl-4 py-2 text-black dark:text-white"}>{customer.username}</td>
+
+      <ActionButton/>
+
       <td
-        className={"whitespace-nowrap font-medium px-1 py-2 text-black hover:text-danger dark:text-white dark:hover:text-danger cursor-pointer"}>
-        Button
-      </td>
-      <Link href={`./product/${product.id}`}>
-        <td
-          className={"whitespace-nowrap font-medium px-1 py-2 text-black hover:text-meta-6 dark:text-white dark:hover:text-meta-6 cursor-pointer"}>
+        className={"whitespace-nowrap font-medium px-1 pr-4 py-2 text-black hover:text-meta-6 dark:text-white dark:hover:text-meta-6 cursor-pointer"}>
+        <Link href={`./order/${id}`}>
           Detail
-        </td>
-      </Link>
-      <td onClick={() => setRemove(true)}
-          className={"whitespace-nowrap font-medium px-1 py-2 text-black hover:text-danger dark:text-white dark:hover:text-danger cursor-pointer"}>
-        Delete
+        </Link>
       </td>
     </tr>
   )
@@ -114,7 +93,7 @@ function OrdersRow({id, quantity, total, status, product, createdAt, customer}: 
 
 
 interface OrderTableProps {
-  orders: Order[];
+  orders: OrderInfo[];
   shopNameId: string;
 }
 
@@ -132,8 +111,7 @@ function OrderTable({orders, shopNameId}: OrderTableProps) {
           <th className={"pl-4 py-2"}>Created At</th>
           <th className={"px-4 py-2"}>Customer</th>
           <th className={"px-1 py-2"}></th>
-          <th className={"px-1 py-2"}></th>
-          <th className={"px-1 py-2"}></th>
+          <th className={"px-1 py-2 pr-4"}></th>
         </tr>
         </thead>
 
@@ -148,74 +126,67 @@ function OrderTable({orders, shopNameId}: OrderTableProps) {
 }
 
 export default function OrderList() {
-  const product = {
-    id: 1,
-    displayName: "Test product",
-    stock: 2,
-    price: 20,
-    createdAt: "121"
-  };
-  const orders = [
-    {id: 1, quantity: 2, total: 19, product: product, status: "processing", createdAt: "15-03-2024", customer: "Duc"},
-    {id: 2, quantity: 2, total: 19, product: product, status: "processing", createdAt: "15-03-2024", customer: "Duc"}
-  ];
   const params = useParams();
-  //const [products, setProducts] = useState<Product[]>([]);
-  //const [loading, setLoading] = useState(true);
+
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [orders, setOrders] = useState<OrderInfo[]>([]);
   const limit = 5;
+  const orderby = "createdAt";
+  const status = "all";
 
-  // useEffect(() => {
-  //     fetchData();
-  // }, [params.id, page]);
+  useEffect(() => {
+    fetchData();
+  }, [params.id, page]);
 
-  // const fetchData = () => {
-  //     setLoading(true);
-  //     const data = fetch(process.env.NEXT_PUBLIC_BACKEND_HOST + `/product?limit=${limit}&shop=${params.id}&offset=${(page - 1) * limit}`, {
-  //     method: 'GET',
-  //     headers: {'Content-Type': 'application/json'}
-  //     })
-  //     .then((response) => {
-  //         if (response.ok) {
-  //         return response.json();
-  //         }
-  //     })
-  //     .catch((error) => {
-  //         console.error('Error:', error);
-  //     });
-  //     data.then((data) => {
-  //     setProducts(data.products);
-  //     setTotalPages(data.totalPages);
-  //     setLoading(false);
-  //     });
-  // }
+  const fetchData = () => {
+    setLoading(true);
+    const data = fetch(process.env.NEXT_PUBLIC_BACKEND_HOST + `/order?limit=${limit}&shop=${params.id}&offset=${(page - 1) * limit}&orderby=${orderby}&status=${status}`, {
+      method: 'GET',
+      headers: {'Content-Type': 'application/json'},
+      credentials: "include"
+    })
+      .then((response) => {
+        if (response.ok) return response.json();
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+      });
 
-  // if (loading) {
-  //     return (
-  //     <div>
-  //         <h1 className={"text-3xl text-black-2 dark:text-white font-bold mb-5"}>Order list</h1>
-  //         <Loader/>
-  //     </div>
-  //     )
-  // }
+    data.then((data) => {
+      setOrders(data.orders);
+      setTotalPages(data.totalPages);
+      setLoading(false);
+    });
+  }
+
+  if (loading) {
+    return (
+      <div>
+        <h1 className={"text-3xl text-black-2 dark:text-white font-bold mb-5"}>Order list</h1>
+        <Loader/>
+      </div>
+    )
+  }
   return (
     <div
       className={"rounded-md border border-stroke bg-white p-5 drop-shadow-lg dark:border-strokedark dark:bg-boxdark"}>
       <h1 className={"text-3xl text-black-2 dark:text-white font-bold mb-5"}>Order list</h1>
 
       {orders.length === 0 ?
-        <p className={"text-black-2 dark:text-white"}>It looks like you don't have any products</p> :
+        <p className={"text-black-2 dark:text-white"}>It looks like you don't have any orders</p> :
         <div className={"flex flex-col gap-5"}>
           <div className={"flex flex-row"}>
 
             <div className={"bg-primary py-1 px-2 rounded-md hover:bg-opacity-80 cursor-pointer"}>
               <IoRefreshOutline onClick={() => {
                 setPage(1);
-                orders
+                fetchData();
               }} className={"text-white"} fontSize={25}/>
             </div>
           </div>
+
           <OrderTable shopNameId={params.id as string} orders={orders}/>
           <div className={"flex flex-row justify-between items-center"}>
             <button
