@@ -4,6 +4,7 @@ export default interface ShopInfo {
   description: string;
   address: string;
   phone: string;
+  revenue: number;
   logo: string;
   sold: number;
   createdAt: string;

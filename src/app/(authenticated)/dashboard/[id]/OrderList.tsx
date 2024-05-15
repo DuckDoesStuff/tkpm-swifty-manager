@@ -2,7 +2,7 @@
 
 import {useParams} from "next/navigation";
 import {useEffect, useState} from "react";
-import {Modal} from "antd";
+import {message, Modal, Select} from "antd";
 import {IoRefreshOutline} from "react-icons/io5";
 import Link from "next/link";
 import Loader from "@/components/common/Loader";
@@ -13,10 +13,11 @@ interface OrderRowProps extends OrderInfo {
   shopNameId: string;
 }
 
-function OrdersRow({id, quantity, total, status, product, createdAt, customer}: OrderRowProps) {
+function OrdersRow({id, quantity, total, status, product, createdAt, customer, shopNameId}: OrderRowProps) {
   const [remove, setRemove] = useState(false);
   const date = new Date(createdAt);
   const formattedDate = date.toLocaleString();
+  const [statusState, setStatus] = useState(status);
 
   const ModalFooter = () => {
     return (
@@ -29,13 +30,72 @@ function OrdersRow({id, quantity, total, status, product, createdAt, customer}: 
     )
   }
 
+  const shipOrder = () => {
+    message.loading({
+      content: 'Marking as shipping...',
+      key: 'shipOrder',
+      duration: 0
+    })
+    fetch(process.env.NEXT_PUBLIC_BACKEND_HOST + `/order/${id}?shop=${shopNameId}`, {
+      method: "PATCH",
+      headers: {'Content-Type': 'application/json'},
+      credentials: "include",
+      body: JSON.stringify({status: "shipping"})
+    })
+      .then(() => {
+        message.success({
+          content: 'Status updated',
+          key: 'shipOrder',
+          duration: 2
+        });
+        setStatus("shipping");
+      })
+      .catch((error) => {
+        console.log(error);
+        message.error({
+          content: error,
+          key: 'shipOrder',
+          duration: 2
+        })
+      });
+  }
+
+  const markDelivered = () => {
+    message.loading({
+      content: 'Marking as delivered...',
+      key: 'markDelivered',
+      duration: 0
+    })
+    fetch(process.env.NEXT_PUBLIC_BACKEND_HOST + `/order/${id}?shop=${shopNameId}`, {
+      method: "PATCH",
+      headers: {'Content-Type': 'application/json'},
+      credentials: "include",
+      body: JSON.stringify({status: "delivered"})
+    })
+      .then(() => {
+        message.success({
+          content: 'Status updated',
+          key: 'markDelivered',
+          duration: 2
+        });
+        setStatus("completed");
+      })
+      .catch((error) => {
+        message.error({
+          content: error,
+          key: 'markDelivered',
+          duration: 2
+        })
+      });
+  }
 
   const ActionButton = () => {
-    switch (status) {
+    switch (statusState) {
       case "ordered":
         return <td
+          onClick={shipOrder}
           className={"whitespace-nowrap font-medium px-1 py-2 text-black hover:text-danger dark:text-white dark:hover:text-danger cursor-pointer"}>
-          Take order
+          Ship order
         </td>
       case "incart":
         return <td
@@ -44,15 +104,24 @@ function OrdersRow({id, quantity, total, status, product, createdAt, customer}: 
         </td>
       case "shipping":
         return <td
+          onClick={markDelivered}
+          className={"whitespace-nowrap font-medium px-1 py-2 text-black hover:text-danger dark:text-white dark:hover:text-danger cursor-pointer"}>
+          Delivered
+        </td>
+      case "completed":
+        return <td
           className={"whitespace-nowrap font-medium px-1 py-2 text-neutral-400 dark:text-neutral-500"}>
           No action
         </td>
-      case "completed":
-        return null;
+      case "delivered":
+        return <td
+          className={"whitespace-nowrap font-medium px-1 py-2 text-neutral-400 dark:text-neutral-500"}>
+          No action
+        </td>
       default:
         return <td
-          className={"whitespace-nowrap font-medium px-1 py-2 text-black hover:text-danger dark:text-white dark:hover:text-danger cursor-pointer"}>
-          Take order
+          className={"whitespace-nowrap font-medium px-1 py-2 text-neutral-400 dark:text-neutral-500"}>
+          No action
         </td>
     }
   }
@@ -75,7 +144,7 @@ function OrdersRow({id, quantity, total, status, product, createdAt, customer}: 
       <td className={"whitespace-nowrap font-medium px-4 py-2 text-black dark:text-white"}>{product.displayName}</td>
       <td className={"whitespace-nowrap font-medium px-4 py-2 text-black dark:text-white"}>{quantity}</td>
       <td className={"whitespace-nowrap font-medium px-4 py-2 text-black dark:text-white"}>{total}</td>
-      <td className={"whitespace-nowrap font-medium pl-4 py-2 text-black dark:text-white"}>{status}</td>
+      <td className={"whitespace-nowrap font-medium pl-4 py-2 text-black dark:text-white"}>{statusState}</td>
       <td className={"whitespace-nowrap font-medium pl-4 py-2 text-black dark:text-white"}>{formattedDate}</td>
       <td className={"whitespace-nowrap font-medium pl-4 py-2 text-black dark:text-white"}>{customer.username}</td>
 
@@ -83,7 +152,7 @@ function OrdersRow({id, quantity, total, status, product, createdAt, customer}: 
 
       <td
         className={"whitespace-nowrap font-medium px-1 pr-4 py-2 text-black hover:text-meta-6 dark:text-white dark:hover:text-meta-6 cursor-pointer"}>
-        <Link href={`./order/${id}`}>
+        <Link href={`./order/${id}?shop=${shopNameId}`}>
           Detail
         </Link>
       </td>
@@ -99,7 +168,7 @@ interface OrderTableProps {
 
 function OrderTable({orders, shopNameId}: OrderTableProps) {
   return (
-    <div className={"border border-strokedark rounded-md dark:border-gray-3"}>
+    <div className={"border border-strokedark rounded-md dark:border-gray-3 overflow-x-auto"}>
       <table className={"w-full divide-y divide-strokedark dark:divide-gray-3 rounded-md"}>
         <thead className={"text-primary dark:text-meta-3 font-extrabold text-lg"}>
         <tr className={"text-left"}>
@@ -134,15 +203,15 @@ export default function OrderList() {
   const [orders, setOrders] = useState<OrderInfo[]>([]);
   const limit = 5;
   const orderby = "createdAt";
-  const status = "all";
+  const [status, setStatus] = useState('all')
 
   useEffect(() => {
     fetchData();
-  }, [params.id, page]);
+  }, [params.id, page, status]);
 
   const fetchData = () => {
     setLoading(true);
-    const data = fetch(process.env.NEXT_PUBLIC_BACKEND_HOST + `/order?limit=${limit}&shop=${params.id}&offset=${(page - 1) * limit}&orderby=${orderby}&status=${status}`, {
+    const data = fetch(process.env.NEXT_PUBLIC_BACKEND_HOST + `/order/shop?limit=${limit}&shop=${params.id}&offset=${(page - 1) * limit}&orderby=${orderby}&status=${status}`, {
       method: 'GET',
       headers: {'Content-Type': 'application/json'},
       credentials: "include"
@@ -169,44 +238,76 @@ export default function OrderList() {
       </div>
     )
   }
+
+  const optionsFilter = [
+    {
+      value: 'all',
+      label: 'All',
+    },
+    {
+      value: 'shipping',
+      label: 'Shipping',
+    },
+    {
+      value: 'delivered',
+      label: 'Delivered',
+    },
+    {
+      value: 'completed',
+      label: 'Completed',
+    }
+  ]
+
   return (
     <div
       className={"rounded-md border border-stroke bg-white p-5 drop-shadow-lg dark:border-strokedark dark:bg-boxdark"}>
       <h1 className={"text-3xl text-black-2 dark:text-white font-bold mb-5"}>Order list</h1>
 
-      {orders.length === 0 ?
-        <p className={"text-black-2 dark:text-white"}>It looks like you don't have any orders</p> :
-        <div className={"flex flex-col gap-5"}>
-          <div className={"flex flex-row"}>
-
-            <div className={"bg-primary py-1 px-2 rounded-md hover:bg-opacity-80 cursor-pointer"}>
-              <IoRefreshOutline onClick={() => {
-                setPage(1);
-                fetchData();
-              }} className={"text-white"} fontSize={25}/>
-            </div>
+      <div className={"flex flex-col gap-5"}>
+        <div className={"flex flex-row gap-10"}>
+          <div className={"bg-primary py-1 px-2 rounded-md hover:bg-opacity-80 cursor-pointer"}>
+            <IoRefreshOutline onClick={() => {
+              setPage(1);
+              fetchData();
+            }} className={"text-white"} fontSize={25}/>
           </div>
 
-          <OrderTable shopNameId={params.id as string} orders={orders}/>
-          <div className={"flex flex-row justify-between items-center"}>
-            <button
-              disabled={page === 1}
-              onClick={() => setPage(prev => Math.max(prev - 1, 1))}
-              className={"bg-primary text-white rounded-md px-4 py-2 disabled:bg-bodydark1 disabled:text-black"}>Previous
-              page
-            </button>
-
-            <p className={"text-black-2 dark:text-white"}>Page {page} of {totalPages}</p>
-
-            <button
-              disabled={page === totalPages}
-              onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
-              className={"bg-primary text-white rounded-md px-4 py-2 disabled:bg-bodydark1 disabled:text-black"}>Next
-              page
-            </button>
+          <div className={"flex items-center justify-center gap-4"}>
+            <h1>Status: </h1>
+            <Select
+              className={"w-40"}
+              defaultValue={status}
+              options={optionsFilter}
+              onChange={(value) => {
+                setStatus(value);
+              }}/>
           </div>
         </div>
-      }
+
+        {orders.length === 0 ?
+          <p className={"text-black-2 dark:text-white"}>It looks like you don't have any orders</p> :
+          <>
+            <OrderTable shopNameId={params.id as string} orders={orders}/>
+            <div className={"flex flex-row justify-between items-center"}>
+              <button
+                disabled={page === 1}
+                onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+                className={"bg-primary text-white rounded-md px-4 py-2 disabled:bg-bodydark1 disabled:text-black"}>Previous
+                page
+              </button>
+
+              <p className={"text-black-2 dark:text-white"}>Page {page} of {totalPages}</p>
+
+              <button
+                disabled={page === totalPages}
+                onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+                className={"bg-primary text-white rounded-md px-4 py-2 disabled:bg-bodydark1 disabled:text-black"}>Next
+                page
+              </button>
+            </div>
+          </>}
+      </div>
+
     </div>
   )
 }

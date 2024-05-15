@@ -12,6 +12,7 @@ import Link from "next/link";
 interface Product {
   id: number;
   displayName: string;
+  sold: number;
   stock: number;
   price: number;
   createdAt: string;
@@ -21,7 +22,7 @@ interface ProductRowProps extends Product{
   shopNameId: string;
 }
 
-function ProductRow({id, displayName, stock, price, createdAt, shopNameId} : ProductRowProps) {
+function ProductRow({id, displayName, sold, stock, price, createdAt, shopNameId}: ProductRowProps) {
   const [remove, setRemove] = useState(false);
   const date = new Date(createdAt);
   const formattedDate = date.toLocaleString();
@@ -79,15 +80,16 @@ function ProductRow({id, displayName, stock, price, createdAt, shopNameId} : Pro
         <p className={"text-black-2 text-lg"}>This action can't be undo</p>
       </Modal>
       <td className={"whitespace-nowrap font-medium px-4 py-2 text-black dark:text-white"}>{displayName}</td>
+      <td className={"whitespace-nowrap font-medium px-4 py-2 text-black dark:text-white"}>{sold}</td>
       <td className={"whitespace-nowrap font-medium px-4 py-2 text-black dark:text-white"}>{stock}</td>
       <td className={"whitespace-nowrap font-medium px-4 py-2 text-black dark:text-white"}>{price}</td>
       <td className={"whitespace-nowrap font-medium pl-4 py-2 text-black dark:text-white"}>{formattedDate}</td>
-        <td
+      <td
         className={"whitespace-nowrap font-medium px-1 py-2 text-black hover:text-meta-6 dark:text-white dark:hover:text-meta-6 cursor-pointer"}>
-          <Link href={`./product/${id}`}>
-            Detail
-          </Link>
-        </td>
+        <Link href={`./product/${id}`}>
+          Detail
+        </Link>
+      </td>
       <td
         className={"whitespace-nowrap font-medium px-1 py-2 text-black hover:text-primary dark:text-white dark:hover:text-primary cursor-pointer"}>
         <Link href={`./product/${id}?edit=true`}>
@@ -110,11 +112,12 @@ interface ProductTableProps {
 
 function ProductTable({products, shopNameId}: ProductTableProps) {
   return (
-    <div className={"border border-strokedark rounded-md dark:border-gray-3"}>
+    <div className={"border border-strokedark rounded-md dark:border-gray-3 overflow-x-auto"}>
       <table className={"w-full divide-y divide-strokedark dark:divide-gray-3 rounded-md"}>
         <thead className={"text-primary dark:text-meta-3 font-extrabold text-lg"}>
         <tr className={"text-left"}>
           <th className={"px-4 py-2"}>Product Name</th>
+          <th className={"px-4 py-2"}>Sold</th>
           <th className={"px-4 py-2"}>Stock</th>
           <th className={"px-4 py-2"}>Price</th>
           <th className={"pl-4 py-2"}>Created At</th>
@@ -141,14 +144,15 @@ export default function ProductList() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const limit = 5;
+  const [orderby, setOrderby] = useState("createdAt");
 
   useEffect(() => {
     fetchData();
-  }, [params.id, page]);
+  }, [params.id, page, orderby]);
 
   const fetchData = () => {
     setLoading(true);
-    const data = fetch(process.env.NEXT_PUBLIC_BACKEND_HOST + `/product?limit=${limit}&shop=${params.id}&offset=${(page - 1) * limit}`, {
+    const data = fetch(process.env.NEXT_PUBLIC_BACKEND_HOST + `/product?limit=${limit}&shop=${params.id}&offset=${(page - 1) * limit}&orderby=${orderby}`, {
       method: 'GET',
       headers: {'Content-Type': 'application/json'}
     })
@@ -176,23 +180,51 @@ export default function ProductList() {
     )
   }
 
+  const optionsSort = [
+    {label: "Created At", value: "createdAt"},
+    {label: "Sold", value: "sold"},
+    {label: "Stock", value: "stock"},
+    {label: "Price", value: "price"}
+  ]
+
   return (
     <div className={"rounded-md border border-stroke bg-white p-5 drop-shadow-lg dark:border-strokedark dark:bg-boxdark"}>
-      <h1 className={"text-3xl text-black-2 dark:text-white font-bold mb-5"}>Product list</h1>
+      <div className={"flex justify-between"}>
+        <h1 className={"text-3xl text-black-2 dark:text-white font-bold mb-5"}>Product list</h1>
+        <Link href={`${params.id}/new`}
+              className={"flex-col items-center text-center bg-primary text-white rounded-md h-fit px-4 py-2 hover:bg-opacity-80 disabled:bg-bodydark1 disabled:text-black"}> New
+          Product </Link>
+      </div>
 
-      {products.length === 0 ?
-        <p className={"text-black-2 dark:text-white"}>It looks like you don't have any products</p> :
+
         <div className={"flex flex-col gap-5"}>
-          <div className={"flex flex-row"}>
+          <div className={"flex flex-row gap-10"}>
 
             <div className={"bg-primary py-1 px-2 rounded-md hover:bg-opacity-80 cursor-pointer"}>
-              <IoRefreshOutline onClick={() => {setPage(1); fetchData()}} className={"text-white"} fontSize={25}/>
+              <IoRefreshOutline onClick={() => {
+                setPage(1);
+                fetchData()
+              }} className={"text-white"} fontSize={25}/>
             </div>
+
+            {/*<div className={"flex items-center justify-center gap-4"}>*/}
+            {/*  <h1>Sort: </h1>*/}
+            {/*  <Select*/}
+            {/*    className={"w-40"}*/}
+            {/*    defaultValue={orderby}*/}
+            {/*    options={optionsSort}*/}
+            {/*    onChange={(value) => {*/}
+            {/*      setOrderby(value);*/}
+            {/*    }}/>*/}
+            {/*</div>*/}
           </div>
-          <ProductTable shopNameId={params.id as string} products={products}/>
-          <div className={"flex flex-row justify-between items-center"}>
-            <button
-                    disabled={page === 1}
+          {products.length === 0 ?
+            <p className={"text-black-2 dark:text-white"}>It looks like you don't have any products</p> :
+            <>
+              <ProductTable shopNameId={params.id as string} products={products}/>
+              <div className={"flex flex-row justify-between items-center"}>
+                <button
+                  disabled={page === 1}
                     onClick={() => setPage(prev => Math.max(prev - 1, 1))}
                     className={"bg-primary text-white rounded-md px-4 py-2 disabled:bg-bodydark1 disabled:text-black"}>Previous page
             </button>
@@ -205,8 +237,9 @@ export default function ProductList() {
                     className={"bg-primary text-white rounded-md px-4 py-2 disabled:bg-bodydark1 disabled:text-black"}>Next page
             </button>
           </div>
+            </>}
         </div>
-      }
+
     </div>
   )
 }

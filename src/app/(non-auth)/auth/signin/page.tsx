@@ -1,9 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
-import { Metadata } from "next";
-import DefaultLayout from "@/components/Layouts/DefaultLayout";
+import {Metadata} from "next";
 import SignInForm from "@/components/Auth/SignInForm";
 
 export const metadata: Metadata = {
@@ -18,7 +16,7 @@ const SignIn: React.FC = () => {
         <div className="flex flex-wrap items-center">
           <div className="hidden w-full xl:block xl:w-1/2">
             <div className="px-26 py-17.5 text-center">
-              <Link className="mb-5.5 inline-block" href="/">
+              <div className="mb-5.5 inline-block">
                 <Image
                   className="hidden dark:block"
                   src={"/images/logo/logo.svg"}
@@ -33,11 +31,12 @@ const SignIn: React.FC = () => {
                   width={176}
                   height={32}
                 />
-              </Link>
+              </div>
 
               <p className="2xl:px-20">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit
-                suspendisse.
+                Sign in to start selling your products on our platform. If you don't have an account, you can{" "}
+                <Link href="/auth/signup" className={"underline text-primary"}>
+                  sign up here</Link>
               </p>
 
               <span className="mt-15 inline-block">

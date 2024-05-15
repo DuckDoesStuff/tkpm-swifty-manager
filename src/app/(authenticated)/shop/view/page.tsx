@@ -39,7 +39,7 @@ const ShopCard = ({
   return (
 
     <Link href={`/dashboard/${nameId}`}
-          className="flex justify-between transition-all duration-200 hover:bg-opacity-60 hover:dark:bg-boxdark-2 rounded-md border border-stroke bg-white p-5 drop-shadow-lg dark:border-strokedark dark:bg-boxdark">
+          className="flex text-black dark:text-white justify-between transition-all duration-200 hover:bg-opacity-60 hover:dark:bg-boxdark-2 rounded-md border border-stroke bg-white p-5 drop-shadow-lg dark:border-strokedark dark:bg-boxdark">
       <div>
         <h1>Name: {displayName}</h1>
         <p>ID: {nameId}</p>
@@ -47,8 +47,9 @@ const ShopCard = ({
         <p>Address: {address}</p>
         <p>Phone: {phone}</p>
       </div>
-      <Image className={"rounded-3xl"} width={120} height={120} priority src={logo} alt={`${nameId}-shop-logo`}/>
-  </Link>
+      <Image className={"rounded-full border-2 drop-shadow-lg border-neutral-300"} width={120} height={120} priority
+             src={logo} alt={`${nameId}-shop-logo`}/>
+    </Link>
   )
 }
 

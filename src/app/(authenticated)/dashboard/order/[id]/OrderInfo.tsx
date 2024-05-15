@@ -4,15 +4,18 @@ import FormInput from "@/components/FormElements/FormInput";
 import FormTextArea from "@/components/FormElements/FormTextArea";
 import Carousel from "react-multi-carousel";
 import Image from "next/image";
-import {useParams, useRouter} from "next/navigation";
+import {useParams, useRouter, useSearchParams} from "next/navigation";
 import {useEffect, useState} from "react";
 import OrderInfo from "@/types/OrderInfo";
 import Loader from "@/components/common/Loader";
 import 'react-multi-carousel/lib/styles.css';
+import {message} from "antd";
 
 
 export default function OrderInfo() {
   const params = useParams();
+  const searchParams = useSearchParams();
+  const shopNameId = searchParams.get('shop');
   const router = useRouter();
   const [order, setOrder] = useState<OrderInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -65,6 +68,64 @@ export default function OrderInfo() {
     return <div>Order not found</div>
   }
 
+  const shipOrder = () => {
+    message.loading({
+      content: 'Marking as shipping...>',
+      key: 'shipOrder',
+      duration: 0
+    })
+    fetch(process.env.NEXT_PUBLIC_BACKEND_HOST + `/order/${order.id}?shop=${shopNameId}`, {
+      method: "PATCH",
+      headers: {'Content-Type': 'application/json'},
+      credentials: "include",
+      body: JSON.stringify({status: "shipping"})
+    })
+      .then(() => {
+        message.success({
+          content: 'Status updated',
+          key: 'shipOrder',
+          duration: 2
+        })
+        setOrder({...order, status: "shipping"})
+      })
+      .catch((error) => {
+        message.error({
+          content: error,
+          key: 'shipOrder',
+          duration: 2
+        })
+      });
+  }
+
+  const markDelivered = () => {
+    message.loading({
+      content: 'Marking as delivered...',
+      key: 'markDelivered',
+      duration: 0
+    })
+    fetch(process.env.NEXT_PUBLIC_BACKEND_HOST + `/order/${order.id}?shop=${shopNameId}`, {
+      method: "PATCH",
+      headers: {'Content-Type': 'application/json'},
+      credentials: "include",
+      body: JSON.stringify({status: "delivered"})
+    })
+      .then(() => {
+        message.success({
+          content: 'Status updated',
+          key: 'markDelivered',
+          duration: 2
+        })
+        setOrder({...order, status: "delivered"})
+      })
+      .catch((error) => {
+        message.error({
+          content: error,
+          key: 'markDelivered',
+          duration: 2
+        })
+      });
+  }
+
   return (
     <div className={"flex flex-col gap-5"}>
       {/*Product info*/}
@@ -114,13 +175,24 @@ export default function OrderInfo() {
 
             {/*Action buttons*/}
             <div className={"flex justify-between gap-10 mt-3"}>
-              <button disabled={order.status == "incart" || order.status == "completed"}
-                      className={"bg-primary text-white rounded-md px-3 py-2 disabled:bg-neutral-500"}>Mark as shipping
+              {order.status == "shipping" ?
+                <button onClick={markDelivered}
+                        className={"hover:bg-opacity-80 bg-primary text-white rounded-md px-3 py-2 disabled:bg-neutral-500"}>
+                  Mark delivered
+                </button> :
+                <button onClick={shipOrder}
+                        disabled={order.status == "incart" || order.status == "completed" || order.status == "shipping" || order.status == "delivered" || order.status == "cancelled"}
+                        className={"hover:bg-opacity-80 bg-primary text-white rounded-md px-3 py-2 disabled:bg-neutral-500"}>Ship
+                  order
+                </button>
+              }
+              <button
+                disabled={order.status != "ordered"}
+                className={"hover:bg-opacity-80 bg-primary text-white rounded-md px-3 py-2 disabled:bg-neutral-500"}>Decline
+                order
               </button>
-              <button disabled={order.status != "ordered"}
-                      className={"bg-primary text-white rounded-md px-3 py-2 disabled:bg-neutral-500"}>Decline order
+              <button className={"hover:bg-opacity-80 bg-primary text-white rounded-md px-3 py-2"}>Contact customer
               </button>
-              <button className={"bg-primary text-white rounded-md px-3 py-2"}>Contact customer</button>
             </div>
           </div>
           {/*Customer info*/}

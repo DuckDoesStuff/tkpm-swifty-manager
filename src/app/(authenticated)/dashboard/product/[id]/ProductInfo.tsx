@@ -10,6 +10,53 @@ import Link from "next/link";
 import Image from "next/image";
 import Carousel from "react-multi-carousel";
 import 'react-multi-carousel/lib/styles.css';
+import FileChooser from "@/components/FormElements/FileChooser";
+import {getDownloadURL, getStorage, ref, uploadBytes} from "@firebase/storage";
+import {auth} from "@/js/firebase.config";
+import {message} from "antd";
+
+
+const uploadCloudStorage = async (files: FileList, userId: string, shopNameId: string, productId: string) => {
+  const storage = getStorage();
+  const storageRef = ref(storage, `public/${userId}/${shopNameId}/products/${productId}`);
+
+  const uploadPromises = Array.from(files).map(async (file, i) => {
+    const thumbnailRef = ref(storageRef, `thumbnail_${i + 1}.jpg`);
+    await uploadBytes(thumbnailRef, file);
+    return await getDownloadURL(thumbnailRef);
+  });
+
+  return await Promise.all(uploadPromises);
+}
+
+const createProductImageAPI = async (productId: string, thumbnail: string[]) => {
+
+  const deleteResponse = await fetch(process.env.NEXT_PUBLIC_BACKEND_HOST + `/product/thumbnail/${productId}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+  });
+
+  if (!deleteResponse.ok) {
+    throw new Error(`Error deleting product image! status: ${deleteResponse.status}`);
+  }
+
+  const response = await fetch(process.env.NEXT_PUBLIC_BACKEND_HOST + `/product/thumbnail/${productId}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(thumbnail),
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error updating product image! status: ${response.status}`);
+  }
+}
+
 
 export default function ProductInfo() {
   const [product, setProduct] = useState<ProductInfo | null>(null);
@@ -18,6 +65,7 @@ export default function ProductInfo() {
   const [edit, setEdit] = useState(false);
   const params = useParams<{ tag: string; id: string }>();
   const searchParams = useSearchParams();
+  const [images, setImages] = useState<FileList | null>(null);
 
   useEffect(() => {
     fetch(process.env.NEXT_PUBLIC_BACKEND_HOST + `/product/${params.id}`, {
@@ -67,7 +115,27 @@ export default function ProductInfo() {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    message.loading({
+      content: 'Updating product...',
+      key: 'update-product',
+      duration: 0
+    });
+    if (images != null) {
+      const authUser = auth.currentUser;
+      if (authUser == null) {
+        message.error({
+          content: 'You need to login to update product',
+          key: 'update-product',
+        });
+        return;
+      }
+      const userId = authUser.uid;
+      const urls = await uploadCloudStorage(images, userId, product.shop.nameId, product.id);
+      await createProductImageAPI(params.id, urls);
+    }
+
+
     fetch(process.env.NEXT_PUBLIC_BACKEND_HOST + `/product/${product.id}`, {
       method: "PATCH",
       headers: {"Content-Type": "application/json",},
@@ -80,9 +148,17 @@ export default function ProductInfo() {
       })
     }).then((response) => {
       if (!response.ok) {
+        message.error({
+          content: 'Failed to update product.',
+          key: 'update-product',
+        });
         throw new Error(`Error updating product! status: ${response.status}`);
       }
-      console.log(response);
+      message.success({
+        content: 'Successfully updated product',
+        key: 'update-product',
+      });
+      router.refresh();
       setEdit(false);
     })
   }
@@ -112,6 +188,8 @@ export default function ProductInfo() {
                 <Button label={"Cancel"} color={"danger"} onClick={() => setEdit(false)}/>
               </div>
             )}
+
+            {edit && <FileChooser onChange={(e) => setImages(e.target.files)} multiple label={"Upload new pictures"}/>}
           </div>
 
           <Carousel

@@ -1,10 +1,7 @@
 import React from "react";
-import Link from "next/link";
 import Image from "next/image";
-import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 
-import { Metadata } from "next";
-import DefaultLayout from "@/components/Layouts/DefaultLayout";
+import {Metadata} from "next";
 
 import SignUpForm from "@/components/Auth/SignUpForm";
 
@@ -16,11 +13,12 @@ export const metadata: Metadata = {
 const SignUp: React.FC = () => {
   return (
     <div>
-      <div className="h-screen overflow-hidden rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
+      <div
+        className="h-screen overflow-auto rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
         <div className="flex flex-wrap items-center">
           <div className="hidden w-full xl:block xl:w-1/2">
             <div className="px-26 py-17.5 text-center">
-              <Link className="mb-5.5 inline-block" href="/">
+              <div className="mb-5.5 inline-block">
                 <Image
                   className="hidden dark:block"
                   src={"/images/logo/logo.svg"}
@@ -35,10 +33,9 @@ const SignUp: React.FC = () => {
                   width={176}
                   height={32}
                 />
-              </Link>
+              </div>
               <p className="2xl:px-20">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit
-                suspendisse.
+                Sign up to use Swifty Merchant and start selling your products
               </p>
 
               <span className="mt-15 inline-block">
